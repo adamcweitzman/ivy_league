@@ -10,7 +10,6 @@ namespace ivy_league
     class Program
     {
         private static Game _game;
-        private Serilog.Core.Logger _log;
 
         static void Main(string[] args)
         {
@@ -42,18 +41,21 @@ namespace ivy_league
             Log.Information("Play Game");
             Setup();
 
-            while (_game.StudentsDeck.Count != 0)
-            {
+            //while (_game.StudentsDeck.Count != 0)
+            //{
                 foreach (var player in _game.Players)
                 {
                     TakeTurn(player);
                 };
-            }
+            //}
         }
 
         private static void TakeTurn(Player player)
         {
-            var choices = GetNumberOfChoices(player);
+            //TODO:// fill out turn production on player
+
+            SetTurnProduction(player);
+            PickCard(player);
         }
 
         private static void Setup()
@@ -63,7 +65,7 @@ namespace ivy_league
 
             FlipNewStudentCards();
             FlipNewBuildingCards();
-            GiveRandomBuildingToEachPlayer();
+            GiveRandomChancellorToEachPlayer();
 
             _game.Players.ForEach(x => x.Coins = 3);
         }
@@ -82,24 +84,78 @@ namespace ivy_league
             _game.BuildingsInPlay.AddRange(topCards);
         }
 
-        private static void GiveRandomBuildingToEachPlayer()
+        private static void GiveRandomChancellorToEachPlayer()
         {
+            var chancellors = CreateChancellors();
+            chancellors.Shuffle<Chancellor>();
 
+            for(var i = 0; i < _game.Players.Count; i++)
+            {
+                _game.Players.ElementAt(i).Chancellor = chancellors[i];
+            }
         }
 
-        private static int GetNumberOfChoices(Player player)
+        private static void SetTurnProduction(Player player)
         {
-            // TODO: handle the beggining of game where player has no buildings
+            player.TurnProduction = new Dictionary<Category, int>();
 
-            var buildingProduction = player.Buildings.Select(p => p.Production);
-            var studentChoices = _game.StudentsInPlay.Count(
-                s => buildingProduction.Any(
-                    bp => bp.ProductionType == s.Cost.CostType &&
-                        bp.Amount == s.Cost.Amount));
+            player.TurnProduction.Add(player.Chancellor.Production.ProductionType, player.Chancellor.Production.Amount);
 
-            var buildingChoices = _game.BuildingsInPlay.Where(b => b.Cost <= player.Coins).Count();
+            player.Buildings?.Select(b => b.Production).ToList().ForEach(bp =>
+            {
+                if(player.TurnProduction.ContainsKey(bp.ProductionType))
+                {
+                    player.TurnProduction[bp.ProductionType] = player.TurnProduction[bp.ProductionType] + bp.Amount;
+                }
+                else
+                {
+                    player.TurnProduction.Add(bp.ProductionType, bp.Amount);
+                }
+            });
 
-            return buildingChoices;
+            player.Students?.ForEach(s =>
+            {
+                if (player.TurnProduction.ContainsKey(s.Production.ProductionType))
+                {
+                    player.TurnProduction[s.Production.ProductionType] = player.TurnProduction[s.Production.ProductionType] + s.Production.Amount;
+                }
+                else
+                {
+                    player.TurnProduction.Add(s.Production.ProductionType, s.Production.Amount);
+                }
+            });
+
+            foreach (KeyValuePair<Category, int> kvp in player.TurnProduction)
+            {
+                //textBox3.Text += ("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
+                Log.Information($"TURN PRODUCTION: {player.Name} produces...");
+                Log.Information($"Key = {kvp.Key}, Value = {kvp.Value}");
+            }
+        }
+
+        private static void PickCard(Player player)
+        {
+            var choices = new Choices()
+            {
+                Students = new List<Student>(),
+                Buildings = new List<Building>()
+            };
+
+            _game.StudentsInPlay.ForEach(student =>
+            {
+                if (player.TurnProduction.ContainsKey(student.Cost.CostType))
+                {
+                    choices.Students.Add(student);
+                }
+            });
+
+            _game.BuildingsInPlay.ForEach(building =>
+            {
+                if (player.TurnProduction.ContainsKey(building.Production.ProductionType))
+                {
+                    choices.Buildings.Add(building);
+                }
+            });
         }
 
         private static List<Player> CreatePlayers()
@@ -159,5 +215,30 @@ namespace ivy_league
 
             return buildings;
         }
+
+        private static List<Chancellor> CreateChancellors()
+        {
+            var chancellors = new List<Chancellor>
+            {
+                new Chancellor("Coach Mcteach", 0, Category.None, 2, Category.Football),
+                new Chancellor("Shear-Lock Combs", 1, Category.None, 2, Category.Beauty),
+                new Chancellor("Pastor Tense", 1, Category.None, 2, Category.Academics),
+                new Chancellor("Wayne Kerr", 1, Category.Fun, 2, Category.Fun),
+                new Chancellor("Sum Ting Wong", 1, Category.Fun, 2, Category.Research),
+                new Chancellor("Robyn Banks", 1, Category.Fun, 2, Category.Tuition)
+            };
+
+            return chancellors;
+        }
+
+
+
+
+    }
+
+    public class Choices
+    {
+        public List<Student> Students { get; set; }
+        public List<Building> Buildings { get; set; }
     }
 }

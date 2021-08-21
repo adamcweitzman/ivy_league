@@ -76,11 +76,14 @@ namespace ivy_league.Models
         {
             // TODO: handle the beggining of game where player has no buildings
 
-            var buildingProduction = player.Buildings.Select(p => p.Production);
-            var studentChoices = StudentsInPlay.Count(
-                s => buildingProduction.Any(
-                    bp => bp.ProductionType == s.Cost.CostType &&
-                        bp.Amount == s.Cost.Amount));
+            if(player.Buildings != null)
+            {
+                var buildingProduction = player.Buildings.Select(p => p.Production);
+                var studentChoices = StudentsInPlay.Count(
+                    s => buildingProduction.Any(
+                        bp => bp.ProductionType == s.Cost.CostType &&
+                            bp.Amount == s.Cost.Amount));
+            }
 
             var buildingChoices = BuildingsInPlay.Where(b => b.Cost <= player.Coins).Count();
 

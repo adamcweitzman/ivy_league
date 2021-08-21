@@ -9,6 +9,8 @@ namespace ivy_league.Models
         public string Name { get; set; }
         public List<Student> Students { get; set; }
         public List<Building> Buildings { get; set; }
+        public Chancellor Chancellor { get; set; }
+        public Dictionary<Category, int> TurnProduction { get; set; }
         public int Coins { get; set; }
 
         public Player(string name)
