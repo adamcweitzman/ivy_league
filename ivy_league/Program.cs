@@ -143,7 +143,7 @@ namespace ivy_league
 
             _game.StudentsInPlay.ForEach(student =>
             {
-                if (player.TurnProduction.ContainsKey(student.Cost.CostType))
+                if (player.TurnProduction.ContainsKey(student.Cost.CostType) && student.Cost.Amount <= player.TurnProduction[student.Cost.CostType])
                 {
                     choices.Students.Add(student);
                 }
@@ -151,11 +151,14 @@ namespace ivy_league
 
             _game.BuildingsInPlay.ForEach(building =>
             {
-                if (player.TurnProduction.ContainsKey(building.Production.ProductionType))
+                if (player.TurnProduction.ContainsKey(building.Production.ProductionType) && building.Cost <= player.Coins)
                 {
                     choices.Buildings.Add(building);
                 }
             });
+
+            Random rnd = new Random();
+            int month = rnd.Next(1, 2);
         }
 
         private static List<Player> CreatePlayers()
