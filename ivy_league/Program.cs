@@ -41,13 +41,13 @@ namespace ivy_league
             Log.Information("Play Game");
             Setup();
 
-            //while (_game.StudentsDeck.Count != 0)
-            //{
+            while (_game.StudentsDeck.Count != 0 && _game.BuildingsDeck.Count != 0)
+            {
                 foreach (var player in _game.Players)
                 {
                     TakeTurn(player);
                 };
-            //}
+            }
         }
 
         private static void TakeTurn(Player player)
@@ -127,9 +127,7 @@ namespace ivy_league
 
             foreach (KeyValuePair<Category, int> kvp in player.TurnProduction)
             {
-                //textBox3.Text += ("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
-                Log.Information($"TURN PRODUCTION: {player.Name} produces...");
-                Log.Information($"Key = {kvp.Key}, Value = {kvp.Value}");
+                Log.Information($"TURN PRODUCTION: {player.Name} produces {kvp.Value} {kvp.Key}");
             }
         }
 
@@ -151,14 +149,88 @@ namespace ivy_league
 
             _game.BuildingsInPlay.ForEach(building =>
             {
-                if (player.TurnProduction.ContainsKey(building.Production.ProductionType) && building.Cost <= player.Coins)
+                if (building.Cost <= player.Coins)
                 {
                     choices.Buildings.Add(building);
                 }
             });
 
-            Random rnd = new Random();
-            int month = rnd.Next(1, 2);
+
+            var numberOfChoices = choices.Buildings.Count + choices.Students.Count;
+
+            Log.Information($"CHOICES: {player.Name} has {numberOfChoices} choices");
+
+            if (choices.Buildings.Any() && choices.Students.Any())
+            {
+                Random rnd = new Random();
+                int random = rnd.Next(1, 3);
+                if(random == 1)
+                {
+                    AddBuildingToPlayer(player, choices);
+                }
+                else
+                {
+                    AddStudentToPlayer(player, choices);
+                }
+            }
+            else if(choices.Buildings.Any())
+            {
+                AddBuildingToPlayer(player, choices);
+            }
+            else if(choices.Students.Any())
+            {
+                AddStudentToPlayer(player, choices);
+            }
+        }
+
+        private static void AddStudentToPlayer(Player player, Choices choices)
+        {
+            var studentChoice = choices.Students.GetRandomFromList();
+
+            player.Students.Add(studentChoice);
+            _game.StudentsInPlay.RemoveAll(building => building.Id == studentChoice.Id);
+
+            var tuition = player.Tuition;
+
+            if(player.TurnProduction.ContainsKey(Category.Tuition))
+            {
+                tuition += player.TurnProduction[Category.Tuition];
+            }
+
+            player.Coins += tuition;
+
+            Log.Information($"STUDENT CHOICE: {player.Name} chooses {studentChoice.Name} and gets {tuition} coins for tuition");
+
+            ReplenishStudents();
+        }
+
+        private static void AddBuildingToPlayer(Player player, Choices choices)
+        {
+            var buildingChoice = choices.Buildings.GetRandomFromList();
+            player.Buildings.Add(buildingChoice);
+            _game.BuildingsInPlay.RemoveAll(building => building.Id == buildingChoice.Id);
+
+            Log.Information($"BUILDING CHOICE: {player.Name} chooses {buildingChoice.Name}");
+
+            ReplenishBuildings();
+        }
+
+        private static void ReplenishBuildings()
+        {
+            if(_game.BuildingsDeck.Any())
+            {
+                _game.BuildingsInPlay.Add(_game.BuildingsDeck[0]);
+                _game.BuildingsDeck.RemoveAt(0);
+            }
+        }
+
+        private static void ReplenishStudents()
+        {
+            if(_game.StudentsDeck.Any())
+            {
+                _game.StudentsInPlay.Add(_game.StudentsDeck[0]);
+                _game.StudentsDeck.RemoveAt(0);
+            }
         }
 
         private static List<Player> CreatePlayers()
@@ -186,6 +258,33 @@ namespace ivy_league
                 new Student("Kay Oss", 1, Category.Fun, 1, Category.Academics),
                 new Student("Holly Wood", 1, Category.Fun, 1, Category.Academics),
                 new Student("Buck Nekkid", 1, Category.Fun, 1, Category.Academics),
+
+                new Student("Abdi Abdullah", 1, Category.Football, 1, Category.Football),
+                new Student("Shane Bell", 1, Category.Football, 1, Category.Football),
+                new Student("Hugh Mungus", 1, Category.Football, 1, Category.Football),
+                new Student("Dick Johnson", 1, Category.Football, 1, Category.Football),
+                new Student("Corter Backman", 1, Category.Football, 1, Category.Football),
+                new Student("Blue Mchipper", 1, Category.Football, 1, Category.Football),
+                new Student("Junior Young Jr", 1, Category.Football, 1, Category.Football),
+                new Student("Buddy Frienderson", 1, Category.Football, 1, Category.Football),
+
+                new Student("Monique Newyork", 1, Category.Research, 1, Category.Academics),
+                new Student("Bookish Mcgee", 1, Category.Research, 1, Category.Academics),
+                new Student("Iota Studi", 1, Category.Research, 1, Category.Academics),
+                new Student("Reed Chaucer", 1, Category.Research, 1, Category.Academics),
+                new Student("Amanda Lynn", 1, Category.Research, 1, Category.Academics),
+                new Student("Sarah Nader", 1, Category.Research, 1, Category.Academics),
+                new Student("Tish Huges", 1, Category.Research, 1, Category.Academics),
+                new Student("Research8", 1, Category.Research, 1, Category.Academics),
+
+                new Student("Jack Pott", 1, Category.Tuition, 1, Category.Academics),
+                new Student("Marsha Mellow", 1, Category.Tuition, 1, Category.Academics),
+                new Student("Ty Coon", 1, Category.Tuition, 1, Category.Academics),
+                new Student("Kay Bull", 1, Category.Tuition, 1, Category.Academics),
+                new Student("Queen King", 1, Category.Tuition, 1, Category.Academics),
+                new Student("Tuition6", 1, Category.Tuition, 1, Category.Academics),
+                new Student("Tuition7", 1, Category.Tuition, 1, Category.Academics),
+                new Student("Tuition8", 1, Category.Tuition, 1, Category.Academics),
             };
 
             return students;
@@ -198,22 +297,62 @@ namespace ivy_league
                 new Building("Dorms", 2, 1, Category.Fun),
                 new Building("Dorms", 2, 1, Category.Fun),
                 new Building("Dorms", 2, 1, Category.Fun),
-
                 new Building("Tennis Court", 2, 1, Category.Fun),
                 new Building("Tennis Court", 2, 1, Category.Fun),
                 new Building("Tennis Court", 2, 1, Category.Fun),
-
                 new Building("Food Court", 3, 2, Category.Fun),
                 new Building("Food Court", 3, 2, Category.Fun),
-
                 new Building("Rec Center", 3, 2, Category.Fun),
                 new Building("Rec Center", 3, 2, Category.Fun),
-
                 new Building("Performing Arts Center", 4, 3, Category.Fun),
                 new Building("Performing Arts Center", 4, 3, Category.Fun),
+                new Building("Aquatic Center", 4, 3, Category.Fun),
+                new Building("Aquatic Center", 4, 3, Category.Fun),
 
-                new Building("Aquatic Center", 4, 3, Category.Fun),
-                new Building("Aquatic Center", 4, 3, Category.Fun),
+                new Building("Law School", 2, 1, Category.Research),
+                new Building("Law School", 2, 1, Category.Research),
+                new Building("Law School", 2, 1, Category.Research),
+                new Building("Biosciences Center", 2, 1, Category.Research),
+                new Building("Biosciences Center", 2, 1, Category.Research),
+                new Building("Biosciences Center", 2, 1, Category.Research),
+                new Building("Engineering Quadrangle", 3, 2, Category.Research),
+                new Building("Engineering Quadrangle", 3, 2, Category.Research),
+                new Building("Nanosystems Laboratory", 3, 2, Category.Research),
+                new Building("Nanosystems Laboratory", 3, 2, Category.Research),
+                new Building("Planetarium", 4, 3, Category.Research),
+                new Building("Planetarium", 4, 3, Category.Research),
+                new Building("Particle Accelerator", 4, 3, Category.Research),
+                new Building("Particle Accelerator", 4, 3, Category.Research),
+
+                new Building("Bookstore", 2, 1, Category.Tuition),
+                new Building("Bookstore", 2, 1, Category.Tuition),
+                new Building("Bookstore", 2, 1, Category.Tuition),
+                new Building("Student Union", 2, 1, Category.Tuition),
+                new Building("Student Union", 2, 1, Category.Tuition),
+                new Building("Student Union", 2, 1, Category.Tuition),
+                new Building("Internship Program", 3, 2, Category.Tuition),
+                new Building("Internship Program", 3, 2, Category.Tuition),
+                new Building("Bursers Office", 3, 2, Category.Tuition),
+                new Building("Bursers OFfice", 3, 2, Category.Tuition),
+                new Building("Deans Office", 4, 3, Category.Tuition),
+                new Building("Deans Office", 4, 3, Category.Tuition),
+                new Building("Business School", 4, 3, Category.Tuition),
+                new Building("Business School", 4, 3, Category.Tuition),
+
+                new Building("Fountains", 2, 1, Category.Beauty),
+                new Building("Fountains", 2, 1, Category.Beauty),
+                new Building("Fountains", 2, 1, Category.Beauty),
+                new Building("Secret Hummingbird Garden", 2, 1, Category.Beauty),
+                new Building("Secret Hummingbird Garden", 2, 1, Category.Beauty),
+                new Building("Secret Hummingbird Garden", 2, 1, Category.Beauty),
+                new Building("Turtle Pond", 3, 2, Category.Beauty),
+                new Building("Turtle Pond", 3, 2, Category.Beauty),
+                new Building("Sculpture Garden", 3, 2, Category.Beauty),
+                new Building("Sculpture Garden", 3, 2, Category.Beauty),
+                new Building("Japanese Tea Garden", 4, 3, Category.Beauty),
+                new Building("Japanese Tea Garden", 4, 3, Category.Beauty),
+                new Building("Outdoor Ampitheatre", 4, 3, Category.Beauty),
+                new Building("Outdoor Ampitheatre", 4, 3, Category.Beauty),
             };
 
             return buildings;

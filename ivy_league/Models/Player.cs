@@ -12,11 +12,15 @@ namespace ivy_league.Models
         public Chancellor Chancellor { get; set; }
         public Dictionary<Category, int> TurnProduction { get; set; }
         public int Coins { get; set; }
+        public int Tuition { get; set; }
 
         public Player(string name)
         {
             Name = name;
             Id = System.Guid.NewGuid().ToString();
+            Buildings = new List<Building>();
+            Students = new List<Student>();
+            Tuition = 1;
         }
     }
 }

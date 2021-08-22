@@ -25,5 +25,13 @@ namespace ivy_league
                 list[n] = value;
             }
         }
+
+        public static T GetRandomFromList<T>(this IList<T> list)
+        {
+            var random = new Random();
+            var index = random.Next(list.Count);
+
+            return list[index];
+        }
     }
 }
