@@ -13,6 +13,7 @@ namespace ivy_league.Models
         public Dictionary<Category, int> TurnProduction { get; set; }
         public int Coins { get; set; }
         public int Tuition { get; set; }
+        public int Football { get; set; }
 
         public Player(string name)
         {

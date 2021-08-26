@@ -13,6 +13,7 @@ namespace ivy_league.Models
         public List<Student> StudentsInPlay { get; set; }
         public List<Player> Players { get; set; }
         public int Round { get; set; }
+        public int TurnsWithNoChoice { get; internal set; }
 
         public Game(List<Student> students, List<Building> buildings, List<Player> players)
         {
@@ -21,6 +22,7 @@ namespace ivy_league.Models
             Players = players;
             StudentsInPlay = new List<Student>();
             BuildingsInPlay = new List<Building>();
+            Round = 1;
         }
 
         public void Play()
